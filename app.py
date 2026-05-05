@@ -19,8 +19,8 @@ load_dotenv(_ROOT / ".env")
 # Optional override when deployed next to this package only:
 load_dotenv(Path(__file__).resolve().parent / ".env", override=True)
 
-from .routes.futures import router as futures_router
-from .routes.spot import router as spot_router
+from routes.futures import router as futures_router
+from routes.spot import router as spot_router
 
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
@@ -60,6 +60,7 @@ def format_signal(data: dict) -> str:
     price = data.get("price", "N/A")
     sl = data.get("sl", "N/A")
     tp = data.get("tp", "N/A")
+    interval = data.get("interval", "N/A")
     order_id = data.get("order_id", "")
     ts = data.get("time", "")
     emoji = "🟢" if side in ("BUY", "LONG") else "🔴"
@@ -70,6 +71,7 @@ def format_signal(data: dict) -> str:
         f"Entry: {price}\n"
         f"SL: {sl}\n"
         f"TP: {tp}\n"
+        f"TF: {interval}\n"
         f"Order: {order_id}\n"
         f"Time: {ts}"
     )
@@ -88,6 +90,7 @@ async def webhook(request: Request, _: None = Depends(verify_secret)):
         raise HTTPException(status_code=400, detail="Invalid JSON") from exc
 
     log.info("Webhook payload: %s", data)
+    
     await send_telegram(str(data))
     await send_telegram(format_signal(data))
     return JSONResponse({"status": "ok"})
