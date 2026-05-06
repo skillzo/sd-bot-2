@@ -57,6 +57,29 @@ async def send_telegram(text: str, chat_id: str | int | None = None) -> None:
             log.info("Telegram message sent")
 
 
+def safe_calc_tp(entry, sl, side, rr=4.0):
+    try:
+        entry = float(entry)
+        sl = float(sl)
+        side = side.upper()
+
+        if side in ("BUY", "LONG"):
+            risk = entry - sl
+            if risk <= 0:
+                return "N/A"
+            return round(entry + rr * risk, 2)
+
+        elif side in ("SELL", "SHORT"):
+            risk = sl - entry
+            if risk <= 0:
+                return "N/A"
+            return round(entry - rr * risk, 2)
+
+        return "N/A"
+    except:
+        return "N/A"
+
+
 def format_signal(data: dict) -> str:
     print("--------------------------------")
     print("webhook data",data)
@@ -85,13 +108,16 @@ def format_signal(data: dict) -> str:
         emoji = "🟢" if side in ("BUY", "LONG") else "🔴"
         display_side = side
 
+    # Example usage of safe_calc_tp
+    calc_tp = safe_calc_tp(price, sl, side)
+
     return (
         f"{emoji} <b>Signal</b>\n"
         f"Pair: {symbol}\n"
         f"Side: {display_side}\n"
         f"Entry: {price}\n"
         f"SL: {sl}\n"
-        f"TP: {tp}\n"
+        f"TP: {calc_tp}\n"
         f"TF: {interval}\n"
         f"Order: {order_id}\n"
         f"Time: {ts}"
